@@ -7,7 +7,34 @@ TARGET =
 DEPENDPATH += .
 INCLUDEPATH += .
 
+QT += gui network
+
 # Input
 HEADERS += http_request.h mainwindow.h
 FORMS += mainwindow.ui
 SOURCES += main.cpp mainwindow.cpp
+
+# For qrencode 
+SOURCES += qrencode-3.4.4/bitstream.c \
+        qrencode-3.4.4/mask.c \
+        qrencode-3.4.4/mmask.c \
+        qrencode-3.4.4/qrencode.c \
+        qrencode-3.4.4/qrinput.c \
+        qrencode-3.4.4/split.c \
+        qrencode-3.4.4/qrspec.c \
+        qrencode-3.4.4/rscode.c \
+        qrencode-3.4.4/mqrspec.c
+
+HEADERS += qrencode-3.4.4/bitstream.h \
+        qrencode-3.4.4/mask.h \
+        qrencode-3.4.4/qrencode_inner.h \
+        qrencode-3.4.4/qrencode.h \
+        qrencode-3.4.4/split.h \
+        qrencode-3.4.4/qrinput.h \
+        qrencode-3.4.4/mqrspec.h \
+        qrencode-3.4.4/config.h \
+        qrencode-3.4.4/mmask.h \
+        qrencode-3.4.4/rscode.h \
+        qrencode-3.4.4/qrspec.h
+
+DEFINES += HAVE_CONFIG_H

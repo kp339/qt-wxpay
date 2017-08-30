@@ -2,10 +2,12 @@
 #include <QPixmap>
 #include <QLabel>
 #include <QString>
+#include <QPainter>
 #include <QStringList>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "http_request.h"
+#include "qrencode-3.4.4/qrencode.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -39,6 +41,42 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+// 调用qrencode函数直接生成二维码图片
+void MainWindow::generateQRcode(QString qrcodeStr)
+{
+    QRcode *qrcode;
+    //QR_ECLEVEL_Q 容错等级
+    qrcode = QRcode_encodeString(qrcodeStr.toAscii().data(), 2, QR_ECLEVEL_Q, QR_MODE_8, 1);
+    ui->qrcode_img->setGeometry(300, 140, 200, 200);
+    int temp_width = ui->qrcode_img->width();
+    int temp_height = ui->qrcode_img->height();
+
+    int qrcode_width = qrcode->width;
+    double scale_x = (double)temp_width / (double)qrcode_width;
+    double scale_y =(double) temp_height /(double) qrcode_width;
+    
+    QImage mainimg = QImage(temp_width,temp_height,QImage::Format_RGB16);
+    QPainter painter(&mainimg);
+    QColor background(Qt::white);
+    painter.setBrush(background);
+    painter.setPen(Qt::NoPen);
+    painter.drawRect(0, 0, temp_width, temp_height);
+    QColor foreground(Qt::black);
+    painter.setBrush(foreground);
+    for( int y = 0; y < qrcode_width; y ++) {
+        for(int x = 0; x < qrcode_width; x++) {
+            unsigned char b = qrcode->data[y * qrcode_width + x];
+            if(b & 0x01) {
+                QRectF r(x * scale_x, y * scale_y, scale_x, scale_y);
+                painter.drawRects(&r, 1);
+            }
+        }
+    }
+    QPixmap mainmap = QPixmap::fromImage(mainimg);
+    ui->qrcode_img->setPixmap(mainmap);
+    ui->qrcode_img->setVisible(true);
+}
+
 void MainWindow::wx_handler()
 {
     switch (wx_handle_step) {
@@ -63,13 +101,20 @@ void MainWindow::wx_handler()
         this->wx_pay_url = strlist.at(1);
 
         QString cmd = "qrencode " + wx_pay_url + " -s 6 -o /opt/qrcode.png";
-        system(cmd.toAscii().data());
-        system("sync");
+        int ret = system(cmd.toAscii().data());
+        if (ret == 0) {
+            // 调用工具方式
+            system("sync");
+            QPixmap pixmap_qrcode("/opt/qrcode.png");
+            ui->qrcode_img->setGeometry(300, 140, 200, 200);
+            ui->qrcode_img->setPixmap(pixmap_qrcode);
+            ui->qrcode_img->setVisible(true);
+        } else {
+            // 直接调动源码方式
+            generateQRcode(wx_pay_url);
+        }
 
-        QPixmap pixmap_qrcode("/opt/qrcode.png");
-        ui->qrcode_img->setGeometry(200, 40, 400, 400);
-        ui->qrcode_img->setPixmap(pixmap_qrcode);
-        ui->qrcode_img->setVisible(true);
+        
 
         this->wx_handle_step = 2;
         this->timer->start(5000);

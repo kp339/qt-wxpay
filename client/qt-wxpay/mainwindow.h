@@ -16,6 +16,7 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+    void generateQRcode(QString qrcodeStr);
 
 protected slots:
     void wx_handler();
